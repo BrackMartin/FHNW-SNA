@@ -1,6 +1,7 @@
 package ch.fhnw.sna.mailcollector.gui;
 
 import ch.fhnw.sna.mailcollector.collector.MailCollector;
+import javafx.concurrent.Service;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
@@ -26,7 +27,7 @@ public class CredentialsController {
     private void initializeFieldActions() {
         btnLogin.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
 
-            if(txtUsername.getText().equals("") ||txtPassword.getText().equals("")) {
+            if (txtUsername.getText().equals("") || txtPassword.getText().equals("")) {
                 // ToDo error message
                 return;
             }
@@ -38,9 +39,14 @@ public class CredentialsController {
     private void downloadMails(String username, String password) {
         try {
             MailCollector mailCollector = new MailCollector(username, password);
-            mailCollector.downloadMails();
 
-        }catch(Exception exception) {
+            Service<String> service = mailCollector.downloadMailsAsync();
+            service.start();
+            service.setOnSucceeded(event -> {
+                System.out.println(event);
+            });
+
+        } catch (Exception exception) {
             System.out.println(exception.getMessage());
             // ToDo show error message
         }

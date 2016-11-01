@@ -3,6 +3,8 @@ package ch.fhnw.sna.mailcollector.collector;
 import ch.fhnw.sna.mailcollector.models.Mail;
 import ch.fhnw.sna.mailcollector.models.Person;
 import ch.fhnw.sna.mailcollector.util.HibernateUtil;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.PropertySet;
 import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
@@ -34,6 +36,8 @@ public class MailCollector {
     private String _username;
     private String _password;
 
+    private Service<String> _downloadService;
+
     private List<String> emails = new ArrayList<>();
 
     /**
@@ -57,6 +61,46 @@ public class MailCollector {
         exchangeService.autodiscoverUrl(this._username);
 
         findItems(exchangeService);
+    }
+
+
+    /**
+     * Downloads all mails in a separate thread
+     *
+     * @return
+     * @throws Exception
+     */
+    public Service<String> downloadMailsAsync() throws Exception {
+        this._downloadService = new Service<String>() {
+            @Override
+            protected Task<String> createTask() {
+                try {
+                    return new Task<String>() {
+                        @Override
+                        protected String call() throws Exception {
+                            downloadMails();
+                            return "success";
+                        }
+                    };
+                } catch (Exception exception) {
+                    return new Task<String>() {
+                        @Override
+                        protected String call() throws Exception {
+                            return exception.getMessage();
+                        }
+                    };
+                }
+            }
+        };
+
+        return this._downloadService;
+    }
+
+    /**
+     * Aborts all running services
+     */
+    public void abortServices() {
+        if (this._downloadService != null && this._downloadService.isRunning()) this._downloadService.cancel();
     }
 
     /**
@@ -154,6 +198,5 @@ public class MailCollector {
                 new SearchFilter.ContainsSubstring(EmailMessageSchema.From, "@students.fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase)
         );
     }
-
 
 }
