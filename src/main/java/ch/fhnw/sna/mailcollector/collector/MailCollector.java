@@ -2,6 +2,7 @@ package ch.fhnw.sna.mailcollector.collector;
 
 import ch.fhnw.sna.mailcollector.models.Mail;
 import ch.fhnw.sna.mailcollector.models.Person;
+import ch.fhnw.sna.mailcollector.util.HibernateUtil;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.PropertySet;
 import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
@@ -22,15 +23,18 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter.SearchFilterCollection;
+import org.hibernate.Session;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class MailCollector {
 
     private String _username;
     private String _password;
+
+    private List<String> emails = new ArrayList<>();
 
     /**
      * Default Constructor
@@ -61,6 +65,9 @@ public class MailCollector {
      * @param exchangeService
      */
     private void findItems(ExchangeService exchangeService) throws Exception {
+        //create session
+        HibernateUtil.initializeSession();
+        Session session = HibernateUtil.session;
 
         // item view
         ItemView itemView = new ItemView(9999);
@@ -86,31 +93,52 @@ public class MailCollector {
 
         for (Item item : findResults) {
             if (!(item instanceof EmailMessage)) continue;
-
             // Bugfix
             try {
                 item.getBody();
-            }catch (Exception exception) {
+            } catch (Exception exception) {
                 item.load();
             }
 
             EmailMessage emailMessage = (EmailMessage) item;
             EmailAddress emailAddressInfo = emailMessage.getFrom();
             Person sender = new Person(emailAddressInfo.getAddress(), emailAddressInfo.getName());
+            try {
+                if (!emails.contains(emailAddressInfo.getAddress())) {
+                    emails.add(emailAddressInfo.getAddress());
+                    System.out.println("Persisting " + emailAddressInfo.getAddress() + " to db");
+                    session.save(sender);
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
 
             // Set receivers of Mail
             ArrayList<Person> receivers = new ArrayList<>();
-            for (EmailAddress emailAddressReceiver: emailMessage.getToRecipients().getItems()) {
+            for (EmailAddress emailAddressReceiver : emailMessage.getToRecipients().getItems()) {
                 Person person = new Person(emailAddressReceiver.getAddress(), emailAddressReceiver.getName());
                 people.put(emailAddressReceiver.getAddress(), person);
                 receivers.add(person);
+
+                if (!emails.contains(emailAddressReceiver.getAddress())) {
+                    emails.add(emailAddressReceiver.getAddress());
+                    System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
+                    session.save(person);
+                }
             }
 
             people.put(emailAddressInfo.getAddress(), sender);
             mails.add(new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
+
+            for (Mail mail : mails) {
+                session.save(mail);
+            }
+
         }
 
         System.out.println("finished collecting");
+        HibernateUtil.endSession();
     }
 
     /**
@@ -126,4 +154,6 @@ public class MailCollector {
                 new SearchFilter.ContainsSubstring(EmailMessageSchema.From, "@students.fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase)
         );
     }
+
+
 }

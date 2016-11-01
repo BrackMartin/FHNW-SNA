@@ -1,6 +1,13 @@
 package ch.fhnw.sna.mailcollector.models;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "persons")
 public class Person {
+    @Id
     private String _email;
     private String _name;
 

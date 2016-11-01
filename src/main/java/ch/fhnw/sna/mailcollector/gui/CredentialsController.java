@@ -20,6 +20,7 @@ public class CredentialsController {
 
     public void initialize() {
         initializeFieldActions();
+        txtUsername.setText("matthias.langhard@students.fhnw.ch");
     }
 
     private void initializeFieldActions() {

@@ -1,16 +1,28 @@
 package ch.fhnw.sna.mailcollector.models;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+@Entity
+@Table(name = "mails")
 public class Mail {
+    @Id
+    @GeneratedValue
+    private Integer id;
+
     private String _id;
     private String _subject;
+    @Lob
+    @Column(length = 100000)
     private String _body;
     private Date _sentTime;
     private boolean _hasAttachment;
+    @ManyToOne
     private Person _sender;
-    private ArrayList<Person> _receivers;
+    @ManyToMany
+    private List<Person> _receivers;
 
     public Mail(String id, String subject, String body, Date sentTime, Person sender, ArrayList<Person> receivers, boolean hasAttachment) {
         this._id = id;
@@ -50,7 +62,7 @@ public class Mail {
         _receivers.add(person);
     }
 
-    public ArrayList<Person> getReceivers() {
+    public List<Person> getReceivers() {
         return _receivers;
     }
 }
