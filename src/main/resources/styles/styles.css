@@ -1,0 +1,56 @@
+.iconMail {
+    -fx-background-image: url('../images/mail.png');
+    -fx-background-position: left top;
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-min-width: 27px;
+    -fx-min-height: 20px;
+}
+
+.title {
+    -fx-padding: 0 0 0 10px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.txt {
+    -fx-border-color: black;
+    -fx-border-width: 1px;
+    -fx-background-color: white;
+    -fx-min-width: 200px;
+}
+
+.btn {
+    -fx-border-color: dodgerblue;
+    -fx-background-color: dodgerblue;
+    -fx-text-fill: white;
+    -fx-min-width: 100px;
+    -fx-text-alignment: center;
+}
+
+.error {
+    -fx-padding: 10px;
+    -fx-background-color: firebrick;
+    -fx-text-alignment: center;
+    visibility: hidden;
+}
+
+.success {
+    -fx-padding: 10px;
+    -fx-background-color: limegreen;
+    -fx-text-alignment: center;
+    visibility: hidden;
+}
+
+.error .lbl, .success .lbl {
+    -fx-text-fill: white;
+    -fx-text-alignment: center;
+}
+
+.loading {
+    visibility: hidden;
+}
+
+.error.show, .success.show, .loading.show {
+    visibility: visible;
+}

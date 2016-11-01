@@ -12,7 +12,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/views/CredentialForm.fxml"));
         primaryStage.setTitle("SNA Mail Collector");
-        primaryStage.setScene(new Scene(root, 300, 275));
+        Scene scene = new Scene(root, 600, 300);
+        scene.getStylesheets().add("/styles/styles.css");
+        primaryStage.setScene(scene);
         primaryStage.show();
     }
 
