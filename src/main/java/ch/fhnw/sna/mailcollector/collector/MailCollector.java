@@ -164,7 +164,7 @@ public class MailCollector {
             try {
                 if (emailAddressInfo.getAddress() != null && !emails.contains(emailAddressInfo.getAddress())) {
                     emails.add(emailAddressInfo.getAddress());
-                    System.out.println("Persisting " + emailAddressInfo.getAddress() + " to db");
+                    //System.out.println("Persisting " + emailAddressInfo.getAddress() + " to db");
                     session.saveOrUpdate(sender);
                 }
             } catch (Exception e) {
@@ -181,7 +181,7 @@ public class MailCollector {
 
                 if (emailAddressReceiver.getAddress() != null && !emails.contains(emailAddressReceiver.getAddress())) {
                     emails.add(emailAddressReceiver.getAddress());
-                    System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
+                    //System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
                     session.saveOrUpdate(person);
                 }
             }
