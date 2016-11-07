@@ -69,7 +69,7 @@ public class CredentialsController {
                 lblLoading.getStyleClass().removeAll("show");
                 hbError.getStyleClass().removeAll("show");
                 hbSuccess.getStyleClass().add("show");
-                lblSuccessMsg.setText(event.getSource().toString());
+                lblSuccessMsg.setText("Finished collecting successfully");
                 System.out.println(event);
                 toggleForm(false);
             });

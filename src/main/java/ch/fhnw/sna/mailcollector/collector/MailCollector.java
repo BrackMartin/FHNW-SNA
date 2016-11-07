@@ -152,15 +152,16 @@ public class MailCollector {
 
         for (Item item : findResults) {
             if (!(item instanceof EmailMessage)) continue;
-            // Bugfix
+
             try {
-                item.getBody();
+                item.getBody(); // Bugfix of API
             } catch (Exception exception) {
                 item.load();
             }
 
             EmailMessage emailMessage = (EmailMessage) item;
             EmailAddress emailAddressInfo = emailMessage.getFrom();
+
             Person sender = new Person(emailAddressInfo.getAddress(), emailAddressInfo.getName());
             try {
                 if (emailAddressInfo.getAddress() != null && !emails.contains(emailAddressInfo.getAddress())) {
@@ -171,7 +172,6 @@ public class MailCollector {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-
 
             // Set receivers of Mail
             ArrayList<Person> receivers = new ArrayList<>();
@@ -184,14 +184,16 @@ public class MailCollector {
                     emails.add(emailAddressReceiver.getAddress());
                     //System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
                     session.saveOrUpdate(person);
+                }else if(emailAddressReceiver.getAddress() == null) {
+                    System.out.println("Fehler!!! " + emailMessage.getSubject());
                 }
             }
+
 
             people.put(emailAddressInfo.getAddress(), sender);
             mails.add(new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
 
             for (Mail mail : mails) {
-                if (mail.getSender() != null && !mail.getReceivers().contains(null))
                     session.save(mail);
             }
 
