@@ -109,14 +109,32 @@ public class MailCollector {
      * @param exchangeService
      */
     private void findItems(ExchangeService exchangeService) throws Exception {
-        //create session
-        HibernateUtil.initializeSession();
-        Session session = HibernateUtil.session;
 
         // item view
         ItemView itemView = new ItemView(9999);
         itemView.getOrderBy().add(ItemSchema.DateTimeReceived, SortDirection.Descending);
         itemView.setPropertySet(new PropertySet(BasePropertySet.FirstClassProperties));
+
+        // filters
+        SearchFilter searchFiltersInbox = getSearchFiltersFrom();
+        SearchFilter searchFiltersTo = getSearchFiltersTo();
+
+        FindItemsResults<Item> findResults = exchangeService.findItems(WellKnownFolderName.Inbox, searchFiltersInbox, itemView);
+        FindItemsResults<Item> findResultsTo = exchangeService.findItems(WellKnownFolderName.SentItems, searchFiltersTo, itemView);
+        processItems(findResults, exchangeService);
+        processItems(findResultsTo, exchangeService);
+    }
+
+    /**
+     * Saves result in database
+     * @param findResults
+     * @param exchangeService
+     */
+    private void processItems(FindItemsResults<Item> findResults, ExchangeService exchangeService) throws Exception {
+
+        //create session
+        HibernateUtil.initializeSession();
+        Session session = HibernateUtil.session;
 
         PropertySet propSet = new PropertySet(BasePropertySet.FirstClassProperties);
         propSet.add(ItemSchema.Subject);
@@ -126,10 +144,6 @@ public class MailCollector {
         propSet.add(EmailMessageSchema.ToRecipients);
         propSet.add(ItemSchema.DateTimeSent);
 
-        // filters
-        SearchFilter searchFiltersInbox = getSearchFiltersFrom();
-
-        FindItemsResults<Item> findResults = exchangeService.findItems(WellKnownFolderName.Inbox, searchFiltersInbox, itemView);
         exchangeService.loadPropertiesForItems(findResults.getItems(), propSet);
         System.out.println("Total number of items found: " + findResults.getTotalCount());
         HashMap<String, Person> people = new HashMap<>();
@@ -196,6 +210,20 @@ public class MailCollector {
                 LogicalOperator.Or,
                 new SearchFilter.ContainsSubstring(EmailMessageSchema.From, "@fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase),
                 new SearchFilter.ContainsSubstring(EmailMessageSchema.From, "@students.fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase)
+        );
+    }
+
+    /**
+     * Creates filters for inbox folder
+     *
+     * @return
+     */
+    private SearchFilter getSearchFiltersTo() {
+
+        return new SearchFilterCollection(
+                LogicalOperator.Or,
+                new SearchFilter.ContainsSubstring(EmailMessageSchema.ToRecipients, "@fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase),
+                new SearchFilter.ContainsSubstring(EmailMessageSchema.ToRecipients, "@students.fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase)
         );
     }
 
