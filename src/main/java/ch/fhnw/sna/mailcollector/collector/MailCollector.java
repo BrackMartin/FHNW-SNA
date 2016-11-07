@@ -148,7 +148,7 @@ public class MailCollector {
             EmailAddress emailAddressInfo = emailMessage.getFrom();
             Person sender = new Person(emailAddressInfo.getAddress(), emailAddressInfo.getName());
             try {
-                if (!emails.contains(emailAddressInfo.getAddress())) {
+                if (emailAddressInfo.getAddress() != null && !emails.contains(emailAddressInfo.getAddress())) {
                     emails.add(emailAddressInfo.getAddress());
                     System.out.println("Persisting " + emailAddressInfo.getAddress() + " to db");
                     session.save(sender);
@@ -165,7 +165,7 @@ public class MailCollector {
                 people.put(emailAddressReceiver.getAddress(), person);
                 receivers.add(person);
 
-                if (!emails.contains(emailAddressReceiver.getAddress())) {
+                if (emailAddressReceiver.getAddress() != null && !emails.contains(emailAddressReceiver.getAddress())) {
                     emails.add(emailAddressReceiver.getAddress());
                     System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
                     session.save(person);
