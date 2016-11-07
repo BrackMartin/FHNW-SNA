@@ -127,6 +127,7 @@ public class MailCollector {
 
     /**
      * Saves result in database
+     *
      * @param findResults
      * @param exchangeService
      */
@@ -190,7 +191,8 @@ public class MailCollector {
             mails.add(new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
 
             for (Mail mail : mails) {
-                session.save(mail);
+                if (mail.getSender() != null && !mail.getReceivers().contains(null))
+                    session.save(mail);
             }
 
         }
