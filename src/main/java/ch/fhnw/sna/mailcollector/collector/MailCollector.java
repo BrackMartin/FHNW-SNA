@@ -137,6 +137,7 @@ public class MailCollector {
         HibernateUtil.initializeSession();
         Session session = HibernateUtil.session;
 
+        // set Outlook properties (only those were loaded)
         PropertySet propSet = new PropertySet(BasePropertySet.FirstClassProperties);
         propSet.add(ItemSchema.Subject);
         propSet.add(EmailMessageSchema.Body);
@@ -151,8 +152,11 @@ public class MailCollector {
         ArrayList<Mail> mails = new ArrayList<>();
 
         for (Item item : findResults) {
+            // only EmailMessage objects are passing
             if (!(item instanceof EmailMessage)) continue;
 
+            // for some reasons, we need to call item.load() manually otherwise the item object is null.
+            // to always call item.load() is not an option as it slows down the whole process
             try {
                 item.getBody(); // Bugfix of API
             } catch (Exception exception) {
@@ -161,6 +165,7 @@ public class MailCollector {
 
             EmailMessage emailMessage = (EmailMessage) item;
             EmailAddress emailAddressInfo = emailMessage.getFrom();
+
 
             Person sender = new Person(emailAddressInfo.getAddress(), emailAddressInfo.getName());
             try {
@@ -173,7 +178,7 @@ public class MailCollector {
                 System.out.println(e.getMessage());
             }
 
-            // Set receivers of Mail
+            // Set ALL receivers of Mail
             ArrayList<Person> receivers = new ArrayList<>();
             for (EmailAddress emailAddressReceiver : emailMessage.getToRecipients().getItems()) {
                 Person person = new Person(emailAddressReceiver.getAddress(), emailAddressReceiver.getName());
