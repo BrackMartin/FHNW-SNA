@@ -55,12 +55,19 @@ public class MailCollector {
      * Starts downloading the mails from the exchange server
      */
     public void downloadMails() throws Exception {
+
+        findItems();
+    }
+
+    /**
+     * Creates a new ExchangeService-Object
+     */
+    private ExchangeService createExchangeService() throws Exception {
         ExchangeService exchangeService = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
         ExchangeCredentials credentials = new WebCredentials(this._username, this._password);
         exchangeService.setCredentials(credentials);
         exchangeService.autodiscoverUrl(this._username);
-
-        findItems(exchangeService);
+        return exchangeService;
     }
 
 
@@ -106,9 +113,9 @@ public class MailCollector {
     /**
      * Uses findItems with filters to download specific mails
      *
-     * @param exchangeService
+     * @param
      */
-    private void findItems(ExchangeService exchangeService) throws Exception {
+    private void findItems() throws Exception {
 
         // item view
         ItemView itemView = new ItemView(9999);
@@ -119,10 +126,17 @@ public class MailCollector {
         SearchFilter searchFiltersInbox = getSearchFiltersFrom();
         SearchFilter searchFiltersTo = getSearchFiltersTo();
 
-        FindItemsResults<Item> findResults = exchangeService.findItems(WellKnownFolderName.Inbox, searchFiltersInbox, itemView);
-        FindItemsResults<Item> findResultsTo = exchangeService.findItems(WellKnownFolderName.SentItems, searchFiltersTo, itemView);
-        processItems(findResults, exchangeService);
-        processItems(findResultsTo, exchangeService);
+        // Get all Inbox
+        ExchangeService exchangeServiceIn = createExchangeService();
+        FindItemsResults<Item> findResults = exchangeServiceIn.findItems(WellKnownFolderName.Inbox, searchFiltersInbox, itemView);
+        processItems(findResults, exchangeServiceIn);
+        exchangeServiceIn.close();
+
+        // Get all SentItems
+        ExchangeService exchangeServiceOut = createExchangeService();
+        FindItemsResults<Item> findResultsTo = exchangeServiceOut.findItems(WellKnownFolderName.SentItems, searchFiltersTo, itemView);
+        processItems(findResultsTo, exchangeServiceOut);
+        exchangeServiceOut.close();
     }
 
     /**
@@ -149,7 +163,7 @@ public class MailCollector {
         exchangeService.loadPropertiesForItems(findResults.getItems(), propSet);
         System.out.println("Total number of items found: " + findResults.getTotalCount());
         HashMap<String, Person> people = new HashMap<>();
-        ArrayList<Mail> mails = new ArrayList<>();
+        HashMap<Integer, Mail> mails = new HashMap<>();
 
         for (Item item : findResults) {
             // only EmailMessage objects are passing
@@ -189,23 +203,18 @@ public class MailCollector {
                     emails.add(emailAddressReceiver.getAddress());
                     //System.out.println("Persisting " + emailAddressReceiver.getAddress() + " to db");
                     session.saveOrUpdate(person);
-                }else if(emailAddressReceiver.getAddress() == null) {
+                } else if (emailAddressReceiver.getAddress() == null) {
                     System.out.println("Fehler!!! " + emailMessage.getSubject());
                 }
             }
 
-
             people.put(emailAddressInfo.getAddress(), sender);
-            mails.add(new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
-
-            for (Mail mail : mails) {
-                    session.save(mail);
-            }
-
+            mails.put(emailMessage.getId().getUniqueId().hashCode(), new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
         }
 
-        System.out.println("finished collecting");
+        mails.values().forEach(session::save);
         HibernateUtil.endSession();
+        System.out.println("finished collecting");
     }
 
     /**
@@ -235,5 +244,4 @@ public class MailCollector {
                 new SearchFilter.ContainsSubstring(EmailMessageSchema.ToRecipients, "@students.fhnw.ch", ContainmentMode.Substring, ComparisonMode.IgnoreCase)
         );
     }
-
 }
