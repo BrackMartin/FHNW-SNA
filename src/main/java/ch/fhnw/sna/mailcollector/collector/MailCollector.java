@@ -149,7 +149,7 @@ public class MailCollector {
         exchangeService.loadPropertiesForItems(findResults.getItems(), propSet);
         System.out.println("Total number of items found: " + findResults.getTotalCount());
         HashMap<String, Person> people = new HashMap<>();
-        ArrayList<Mail> mails = new ArrayList<>();
+        HashMap<Integer, Mail> mails = new HashMap<>();
 
         for (Item item : findResults) {
             // only EmailMessage objects are passing
@@ -194,15 +194,11 @@ public class MailCollector {
                 }
             }
 
-
             people.put(emailAddressInfo.getAddress(), sender);
-            mails.add(new Mail(emailMessage.getId().getUniqueId(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
-
-            for (Mail mail : mails) {
-                    session.save(mail);
-            }
-
+            mails.put(emailMessage.getId().getUniqueId().hashCode(), new Mail(emailMessage.getId().getUniqueId().hashCode(), emailMessage.getSubject(), emailMessage.getBody().toString(), emailMessage.getDateTimeSent(), sender, receivers, emailMessage.getHasAttachments()));
         }
+
+        mails.values().forEach(session::saveOrUpdate);
 
         System.out.println("finished collecting");
         HibernateUtil.endSession();
