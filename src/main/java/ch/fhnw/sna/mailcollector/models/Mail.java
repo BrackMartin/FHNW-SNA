@@ -8,9 +8,11 @@ import java.util.List;
 @Entity
 @Table(name = "mails")
 public class Mail {
-
     @Id
-    private int _id;
+    @GeneratedValue
+    private Integer id;
+
+    private String _id;
     private String _subject;
     @Lob
     @Column(length = 100000)
@@ -22,7 +24,7 @@ public class Mail {
     @ManyToMany
     private List<Person> _receivers;
 
-    public Mail(int id, String subject, String body, Date sentTime, Person sender, ArrayList<Person> receivers, boolean hasAttachment) {
+    public Mail(String id, String subject, String body, Date sentTime, Person sender, ArrayList<Person> receivers, boolean hasAttachment) {
         this._id = id;
         this._subject = subject;
         this._body = body;
@@ -32,7 +34,7 @@ public class Mail {
         this._receivers = receivers;
     }
 
-    public int getId() {
+    public String getId() {
         return _id;
     }
 
